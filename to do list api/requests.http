@@ -1,0 +1,129 @@
+### Recorrer de arriba a abajo (extensión REST Client de VS Code
+### o el cliente HTTP de IntelliJ). En Postman, crear una request por bloque.
+
+@baseUrl = http://localhost:3000/api
+# Después del primer POST, copiar aquí el id que devolvió
+@taskId = 1
+# Después del login, pegar aquí el accessToken (sin "Bearer")
+@token = pega-aqui-el-token
+
+### ---------- Auth (paso 7) ----------
+
+### Tareas SIN token -> 401
+GET {{baseUrl}}/tasks
+
+### Registro -> 201 (sin el hash)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "ana@test.com",
+  "password": "supersecreta"
+}
+
+### Registro repetido -> 409
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "ana@test.com",
+  "password": "supersecreta"
+}
+
+### Login con contraseña incorrecta -> 401
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@test.com",
+  "password": "incorrecta"
+}
+
+### Login correcto -> 200 { accessToken }
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@test.com",
+  "password": "supersecreta"
+}
+
+### Usuario actual -> 200 { id, email }
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### ---------- Tasks (requieren token) ----------
+
+### Health check -> 200
+GET {{baseUrl}}/health
+
+### Listar tareas -> 200
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+
+### POST válido -> 201 (fijarse que trim() quita los espacios)
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "   Estudiar para el parcial   ",
+  "description": "Repasar capas y validación"
+}
+
+### POST con title vacío -> 400 con details
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": ""
+}
+
+### POST con title de solo espacios -> 400 (gracias a trim)
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "    "
+}
+
+### Obtener una tarea -> 200
+GET {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### PATCH { done: true } -> 200
+PATCH {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "done": true
+}
+
+### PATCH vacío -> 400
+PATCH {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### DELETE -> 204
+DELETE {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### DELETE otra vez -> 404
+DELETE {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### GET de la tarea borrada -> 404
+GET {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### Id que no es número -> 400
+GET {{baseUrl}}/tasks/abc
+Authorization: Bearer {{token}}
+
+### Ruta inexistente -> 404
+GET {{baseUrl}}/no-existe
